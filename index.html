@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shared Services Timesheet & Invoice</title>
+<style>
+  :root {
+    --primary: #2563eb;
+    --primary-dark: #1d4ed8;
+    --success: #16a34a;
+    --warning: #f59e0b;
+    --danger: #dc2626;
+    --gray-50: #f9fafb;
+    --gray-100: #f3f4f6;
+    --gray-200: #e5e7eb;
+    --gray-300: #d1d5db;
+    --gray-500: #6b7280;
+    --gray-700: #374151;
+    --gray-900: #111827;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--gray-50); color: var(--gray-900); line-height: 1.5; }
+  .container { max-width: 900px; margin: 0 auto; padding: 1.5rem; }
+  h1 { font-size: 1.5rem; margin-bottom: 0.25rem; }
+  .subtitle { color: var(--gray-500); font-size: 0.875rem; margin-bottom: 1.5rem; }
+  .card { background: #fff; border-radius: 0.75rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 1.25rem; margin-bottom: 1rem; }
+  .card h2 { font-size: 1rem; margin-bottom: 1rem; color: var(--gray-700); }
+  .form-row { display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: end; margin-bottom: 0.75rem; }
+  .form-group { display: flex; flex-direction: column; gap: 0.25rem; flex: 1; min-width: 140px; }
+  .form-group label { font-size: 0.75rem; font-weight: 600; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.025em; }
+  input, select { padding: 0.5rem 0.75rem; border: 1px solid var(--gray-300); border-radius: 0.5rem; font-size: 0.875rem; }
+  input:focus, select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+  textarea { padding: 0.5rem 0.75rem; border: 1px solid var(--gray-300); border-radius: 0.5rem; font-size: 0.875rem; resize: vertical; width: 100%; }
+  .btn { padding: 0.5rem 1rem; border: none; border-radius: 0.5rem; font-size: 0.875rem; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+  .btn-primary { background: var(--primary); color: #fff; }
+  .btn-primary:hover { background: var(--primary-dark); }
+  .btn-success { background: var(--success); color: #fff; }
+  .btn-danger { background: var(--danger); color: #fff; font-size: 0.75rem; padding: 0.25rem 0.5rem; }
+  .btn-outline { background: #fff; color: var(--gray-700); border: 1px solid var(--gray-300); }
+  .btn-outline:hover { background: var(--gray-100); }
+
+  /* Budget tracker */
+  .budget-bar { background: var(--gray-200); border-radius: 9999px; height: 1.25rem; overflow: hidden; margin: 0.5rem 0; }
+  .budget-fill { height: 100%; border-radius: 9999px; transition: width 0.3s; }
+  .budget-stats { display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--gray-500); }
+  .category-breakdown { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 0.75rem; }
+  .category-chip { font-size: 0.75rem; padding: 0.25rem 0.75rem; border-radius: 9999px; background: var(--gray-100); }
+
+  /* Table */
+  table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  th { text-align: left; padding: 0.5rem; border-bottom: 2px solid var(--gray-200); font-size: 0.75rem; text-transform: uppercase; color: var(--gray-500); }
+  td { padding: 0.5rem; border-bottom: 1px solid var(--gray-100); }
+  tr:hover { background: var(--gray-50); }
+
+  /* Tabs */
+  .tabs { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
+  .tab { padding: 0.5rem 1rem; border: none; background: transparent; font-size: 0.875rem; font-weight: 600; cursor: pointer; border-bottom: 2px solid transparent; color: var(--gray-500); }
+  .tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+
+  /* Invoice */
+  .invoice { background: #fff; padding: 2rem; }
+  .invoice-header { display: flex; justify-content: space-between; margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 3px solid var(--primary); }
+  .invoice-title { font-size: 1.75rem; font-weight: 700; color: var(--primary); }
+  .invoice-meta { text-align: right; font-size: 0.85rem; color: var(--gray-500); }
+  .invoice-parties { display: flex; justify-content: space-between; margin-bottom: 2rem; }
+  .invoice-party { font-size: 0.85rem; }
+  .invoice-party strong { display: block; margin-bottom: 0.25rem; }
+  .invoice-table th { background: var(--gray-100); }
+  .invoice-totals { margin-top: 1rem; margin-left: auto; width: 300px; }
+  .invoice-totals .row { display: flex; justify-content: space-between; padding: 0.35rem 0; font-size: 0.875rem; }
+  .invoice-totals .total { font-weight: 700; font-size: 1rem; border-top: 2px solid var(--gray-900); padding-top: 0.5rem; margin-top: 0.25rem; }
+  .invoice-footer { margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--gray-200); font-size: 0.75rem; color: var(--gray-500); text-align: center; }
+
+  .no-print { }
+  @media print {
+    .no-print { display: none !important; }
+    body { background: #fff; }
+    .container { padding: 0; max-width: 100%; }
+    .card { box-shadow: none; }
+  }
+  @media (max-width: 600px) {
+    .form-row { flex-direction: column; }
+    .form-group { min-width: 100%; }
+    .invoice-header, .invoice-parties { flex-direction: column; gap: 1rem; }
+    .invoice-meta { text-align: left; }
+    .invoice-totals { width: 100%; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="no-print">
+    <h1>Shared Services Timesheet & Invoice</h1>
+    <p class="subtitle">Christ Greenfield Lutheran Church → John 1334 Ministries</p>
+
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('timesheet')">Timesheet</button>
+      <button class="tab" onclick="switchTab('invoice')">View Invoice</button>
+    </div>
+  </div>
+
+  <!-- TIMESHEET TAB -->
+  <div id="tab-timesheet">
+    <!-- Pay Period Settings -->
+    <div class="card">
+      <h2>Pay Period</h2>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Start Date</label>
+          <input type="date" id="periodStart">
+        </div>
+        <div class="form-group">
+          <label>End Date</label>
+          <input type="date" id="periodEnd">
+        </div>
+        <div class="form-group">
+          <label>Invoice #</label>
+          <input type="text" id="invoiceNum" placeholder="INV-2026-001">
+        </div>
+      </div>
+    </div>
+
+    <!-- Budget Tracker -->
+    <div class="card">
+      <h2>Monthly Budget Tracker</h2>
+      <div style="display:flex;justify-content:space-between;align-items:baseline;">
+        <span id="budgetUsed" style="font-size:1.5rem;font-weight:700;">$0.00</span>
+        <span style="font-size:0.85rem;color:var(--gray-500);">of $5,000.00 monthly cap</span>
+      </div>
+      <div class="budget-bar"><div class="budget-fill" id="budgetFill" style="width:0%;background:var(--success);"></div></div>
+      <div class="budget-stats">
+        <span id="budgetPercent">0% used</span>
+        <span id="budgetRemaining">$5,000.00 remaining</span>
+      </div>
+      <div class="category-breakdown" id="categoryBreakdown"></div>
+    </div>
+
+    <!-- Add Entry -->
+    <div class="card">
+      <h2>Add Time Entry</h2>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Date</label>
+          <input type="date" id="entryDate">
+        </div>
+        <div class="form-group">
+          <label>Category</label>
+          <select id="entryCategory">
+            <option value="Accounting">Accounting</option>
+            <option value="Human Resources">Human Resources</option>
+            <option value="Administrative">Administrative</option>
+          </select>
+        </div>
+        <div class="form-group" style="max-width:100px;">
+          <label>Hours</label>
+          <input type="number" id="entryHours" step="0.25" min="0.25" max="24" placeholder="0.00">
+        </div>
+        <div class="form-group">
+          <label>Description (optional)</label>
+          <input type="text" id="entryDesc" placeholder="Brief description of work">
+        </div>
+        <button class="btn btn-primary" onclick="addEntry()" style="height:38px;align-self:end;">+ Add</button>
+      </div>
+    </div>
+
+    <!-- Entries Table -->
+    <div class="card">
+      <h2>Time Entries</h2>
+      <div id="entriesEmpty" style="text-align:center;color:var(--gray-500);padding:2rem;">No entries yet. Add your first time entry above.</div>
+      <table id="entriesTable" style="display:none;">
+        <thead>
+          <tr><th>Date</th><th>Category</th><th>Hours</th><th>Cost</th><th>Description</th><th></th></tr>
+        </thead>
+        <tbody id="entriesBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- INVOICE TAB -->
+  <div id="tab-invoice" style="display:none;">
+    <div class="no-print" style="margin-bottom:1rem;display:flex;gap:0.5rem;">
+      <button class="btn btn-primary" onclick="window.print()">🖨️ Print Invoice</button>
+      <button class="btn btn-outline" onclick="switchTab('timesheet')">← Back to Timesheet</button>
+    </div>
+    <div class="card invoice" id="invoiceContent"></div>
+  </div>
+</div>
+
+<script>
+const HOURLY_RATE = 22.50;
+const FICA_RATE = 0.0765;
+const ALL_IN_RATE = 24.22;
+const MONTHLY_CAP = 5000.00;
+const STORAGE_KEY = 'cg-timesheet-entries';
+const SETTINGS_KEY = 'cg-timesheet-settings';
+
+let entries = [];
+
+function loadData() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    entries = saved ? JSON.parse(saved) : [];
+    const settings = localStorage.getItem(SETTINGS_KEY);
+    if (settings) {
+      const s = JSON.parse(settings);
+      document.getElementById('periodStart').value = s.periodStart || '';
+      document.getElementById('periodEnd').value = s.periodEnd || '';
+      document.getElementById('invoiceNum').value = s.invoiceNum || '';
+    } else {
+      setDefaultPeriod();
+    }
+  } catch(e) {
+    entries = [];
+    setDefaultPeriod();
+  }
+  // Set default entry date to today
+  document.getElementById('entryDate').value = new Date().toISOString().split('T')[0];
+}
+
+function setDefaultPeriod() {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = now.getMonth();
+  if (now.getDate() <= 15) {
+    document.getElementById('periodStart').value = `${y}-${String(m+1).padStart(2,'0')}-01`;
+    document.getElementById('periodEnd').value = `${y}-${String(m+1).padStart(2,'0')}-15`;
+  } else {
+    document.getElementById('periodStart').value = `${y}-${String(m+1).padStart(2,'0')}-16`;
+    const lastDay = new Date(y, m+1, 0).getDate();
+    document.getElementById('periodEnd').value = `${y}-${String(m+1).padStart(2,'0')}-${lastDay}`;
+  }
+  document.getElementById('invoiceNum').value = `INV-${y}-${String(m+1).padStart(2,'0')}${now.getDate() <= 15 ? 'A' : 'B'}`;
+}
+
+function saveData() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify({
+    periodStart: document.getElementById('periodStart').value,
+    periodEnd: document.getElementById('periodEnd').value,
+    invoiceNum: document.getElementById('invoiceNum').value
+  }));
+}
+
+function getFilteredEntries() {
+  const start = document.getElementById('periodStart').value;
+  const end = document.getElementById('periodEnd').value;
+  if (!start || !end) return entries;
+  return entries.filter(e => e.date >= start && e.date <= end);
+}
+
+function addEntry() {
+  const date = document.getElementById('entryDate').value;
+  const category = document.getElementById('entryCategory').value;
+  const hours = parseFloat(document.getElementById('entryHours').value);
+  const desc = document.getElementById('entryDesc').value.trim();
+
+  if (!date || !hours || hours <= 0) {
+    alert('Please enter a valid date and hours.');
+    return;
+  }
+
+  entries.push({ id: Date.now().toString(), date, category, hours, description: desc });
+  entries.sort((a, b) => a.date.localeCompare(b.date));
+  saveData();
+  render();
+
+  // Reset form
+  document.getElementById('entryHours').value = '';
+  document.getElementById('entryDesc').value = '';
+}
+
+function deleteEntry(id) {
+  entries = entries.filter(e => e.id !== id);
+  saveData();
+  render();
+}
+
+function render() {
+  const filtered = getFilteredEntries();
+  const totalHours = filtered.reduce((s, e) => s + e.hours, 0);
+  const totalCost = totalHours * ALL_IN_RATE;
+  const pct = Math.min((totalCost / MONTHLY_CAP) * 100, 100);
+  const remaining = Math.max(MONTHLY_CAP - totalCost, 0);
+
+  // Budget tracker
+  document.getElementById('budgetUsed').textContent = '$' + totalCost.toFixed(2);
+  document.getElementById('budgetPercent').textContent = pct.toFixed(1) + '% used';
+  document.getElementById('budgetRemaining').textContent = '$' + remaining.toFixed(2) + ' remaining';
+  const fill = document.getElementById('budgetFill');
+  fill.style.width = pct + '%';
+  fill.style.background = pct >= 90 ? 'var(--danger)' : pct >= 70 ? 'var(--warning)' : 'var(--success)';
+
+  // Category breakdown
+  const cats = {};
+  filtered.forEach(e => { cats[e.category] = (cats[e.category] || 0) + e.hours; });
+  const colors = { 'Accounting': '#3b82f6', 'Human Resources': '#8b5cf6', 'Administrative': '#f59e0b' };
+  document.getElementById('categoryBreakdown').innerHTML = Object.entries(cats).map(([cat, hrs]) =>
+    `<span class="category-chip" style="border-left:3px solid ${colors[cat] || '#999'}">${cat}: ${hrs.toFixed(2)}h ($${(hrs * ALL_IN_RATE).toFixed(2)})</span>`
+  ).join('');
+
+  // Table
+  const tbody = document.getElementById('entriesBody');
+  const table = document.getElementById('entriesTable');
+  const empty = document.getElementById('entriesEmpty');
+  if (filtered.length === 0) {
+    table.style.display = 'none';
+    empty.style.display = 'block';
+  } else {
+    table.style.display = 'table';
+    empty.style.display = 'none';
+    tbody.innerHTML = filtered.map(e => `<tr>
+      <td>${formatDate(e.date)}</td>
+      <td>${e.category}</td>
+      <td>${e.hours.toFixed(2)}</td>
+      <td>$${(e.hours * ALL_IN_RATE).toFixed(2)}</td>
+      <td style="color:var(--gray-500);font-size:0.8rem;">${e.description || '—'}</td>
+      <td><button class="btn btn-danger" onclick="deleteEntry('${e.id}')">✕</button></td>
+    </tr>`).join('');
+  }
+}
+
+function formatDate(dateStr) {
+  const [y,m,d] = dateStr.split('-');
+  return `${parseInt(m)}/${parseInt(d)}/${y}`;
+}
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  if (tab === 'timesheet') {
+    document.getElementById('tab-timesheet').style.display = 'block';
+    document.getElementById('tab-invoice').style.display = 'none';
+    document.querySelectorAll('.tab')[0].classList.add('active');
+  } else {
+    document.getElementById('tab-timesheet').style.display = 'none';
+    document.getElementById('tab-invoice').style.display = 'block';
+    document.querySelectorAll('.tab')[1].classList.add('active');
+    renderInvoice();
+  }
+}
+
+function renderInvoice() {
+  const filtered = getFilteredEntries();
+  const totalHours = filtered.reduce((s, e) => s + e.hours, 0);
+  const grossWages = totalHours * HOURLY_RATE;
+  const ficaAmount = grossWages * FICA_RATE;
+  const totalDue = grossWages + ficaAmount;
+  const periodStart = document.getElementById('periodStart').value;
+  const periodEnd = document.getElementById('periodEnd').value;
+  const invoiceNum = document.getElementById('invoiceNum').value;
+
+  // Group by category
+  const cats = {};
+  filtered.forEach(e => { cats[e.category] = (cats[e.category] || 0) + e.hours; });
+
+  document.getElementById('invoiceContent').innerHTML = `
+    <div class="invoice-header">
+      <div>
+        <div class="invoice-title">INVOICE</div>
+        <div style="color:var(--gray-500);font-size:0.85rem;">Shared Administrative Services</div>
+      </div>
+      <div class="invoice-meta">
+        <div><strong>Invoice #:</strong> ${invoiceNum || 'N/A'}</div>
+        <div><strong>Pay Period:</strong> ${periodStart ? formatDate(periodStart) : '—'} – ${periodEnd ? formatDate(periodEnd) : '—'}</div>
+        <div><strong>Date Issued:</strong> ${formatDate(new Date().toISOString().split('T')[0])}</div>
+      </div>
+    </div>
+
+    <div class="invoice-parties">
+      <div class="invoice-party">
+        <strong>From:</strong>
+        Christ Greenfield Lutheran Church<br>
+        Shared Services Provider
+      </div>
+      <div class="invoice-party" style="text-align:right;">
+        <strong>Bill To:</strong>
+        John 1334 Ministries<br>
+        (incl. LaMesa LLC & Eden Village LLC)
+      </div>
+    </div>
+
+    <table class="invoice-table">
+      <thead><tr><th>Category</th><th style="text-align:right;">Hours</th><th style="text-align:right;">Rate</th><th style="text-align:right;">Amount</th></tr></thead>
+      <tbody>
+        ${Object.entries(cats).map(([cat, hrs]) => `<tr>
+          <td>${cat}</td>
+          <td style="text-align:right;">${hrs.toFixed(2)}</td>
+          <td style="text-align:right;">$${HOURLY_RATE.toFixed(2)}/hr</td>
+          <td style="text-align:right;">$${(hrs * HOURLY_RATE).toFixed(2)}</td>
+        </tr>`).join('')}
+        ${Object.keys(cats).length === 0 ? '<tr><td colspan="4" style="text-align:center;color:var(--gray-500);padding:1rem;">No entries for this period</td></tr>' : ''}
+      </tbody>
+    </table>
+
+    <div class="invoice-totals">
+      <div class="row"><span>Base Wages (${totalHours.toFixed(2)} hrs × $${HOURLY_RATE.toFixed(2)})</span><span>$${grossWages.toFixed(2)}</span></div>
+      <div class="row"><span>Employer FICA (7.65%)</span><span>$${ficaAmount.toFixed(2)}</span></div>
+      <div class="row total"><span>Total Due</span><span>$${totalDue.toFixed(2)}</span></div>
+    </div>
+
+    <div class="invoice-footer">
+      Per Memorandum of Understanding — Shared Accounting, HR, and Administrative Support<br>
+      All-in hourly rate: $${ALL_IN_RATE}/hr | Monthly cap: $${MONTHLY_CAP.toFixed(2)} | CG is exempt from FUTA/SUTA; only FICA applies.
+    </div>
+  `;
+}
+
+// Listen for settings changes to re-render
+['periodStart', 'periodEnd', 'invoiceNum'].forEach(id => {
+  document.getElementById(id).addEventListener('change', () => { saveData(); render(); });
+});
+
+// Init
+loadData();
+render();
+</script>
+</body>
+</html>
