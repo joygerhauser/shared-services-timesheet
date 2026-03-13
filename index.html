@@ -23,7 +23,12 @@
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--gray-50); color: var(--gray-900); line-height: 1.5; }
   .container { max-width: 900px; margin: 0 auto; padding: 1.5rem; }
   h1 { font-size: 1.5rem; margin-bottom: 0.25rem; }
-  .subtitle { color: var(--gray-500); font-size: 0.875rem; margin-bottom: 1.5rem; }
+  .subtitle { color: var(--gray-500); font-size: 0.875rem; margin-bottom: 0.25rem; }
+  .sync-status { font-size: 0.75rem; margin-bottom: 1rem; padding: 0.35rem 0.75rem; border-radius: 9999px; display: inline-block; }
+  .sync-online { background: #dcfce7; color: #166534; }
+  .sync-offline { background: #fef3c7; color: #92400e; }
+  .sync-loading { background: #dbeafe; color: #1e40af; }
+  .sync-error { background: #fee2e2; color: #991b1b; }
   .card { background: #fff; border-radius: 0.75rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 1.25rem; margin-bottom: 1rem; }
   .card h2 { font-size: 1rem; margin-bottom: 1rem; color: var(--gray-700); }
   .form-row { display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: end; margin-bottom: 0.75rem; }
@@ -31,34 +36,30 @@
   .form-group label { font-size: 0.75rem; font-weight: 600; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.025em; }
   input, select { padding: 0.5rem 0.75rem; border: 1px solid var(--gray-300); border-radius: 0.5rem; font-size: 0.875rem; }
   input:focus, select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
-  textarea { padding: 0.5rem 0.75rem; border: 1px solid var(--gray-300); border-radius: 0.5rem; font-size: 0.875rem; resize: vertical; width: 100%; }
   .btn { padding: 0.5rem 1rem; border: none; border-radius: 0.5rem; font-size: 0.875rem; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
   .btn-primary { background: var(--primary); color: #fff; }
-  .btn-primary:hover { background: var(--primary-dark); }
-  .btn-success { background: var(--success); color: #fff; }
+  .btn-primary:hover:not(:disabled) { background: var(--primary-dark); }
   .btn-danger { background: var(--danger); color: #fff; font-size: 0.75rem; padding: 0.25rem 0.5rem; }
   .btn-outline { background: #fff; color: var(--gray-700); border: 1px solid var(--gray-300); }
   .btn-outline:hover { background: var(--gray-100); }
+  .btn-sm { padding: 0.25rem 0.75rem; font-size: 0.8rem; }
 
-  /* Budget tracker */
   .budget-bar { background: var(--gray-200); border-radius: 9999px; height: 1.25rem; overflow: hidden; margin: 0.5rem 0; }
   .budget-fill { height: 100%; border-radius: 9999px; transition: width 0.3s; }
   .budget-stats { display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--gray-500); }
   .category-breakdown { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 0.75rem; }
   .category-chip { font-size: 0.75rem; padding: 0.25rem 0.75rem; border-radius: 9999px; background: var(--gray-100); }
 
-  /* Table */
   table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
   th { text-align: left; padding: 0.5rem; border-bottom: 2px solid var(--gray-200); font-size: 0.75rem; text-transform: uppercase; color: var(--gray-500); }
   td { padding: 0.5rem; border-bottom: 1px solid var(--gray-100); }
   tr:hover { background: var(--gray-50); }
 
-  /* Tabs */
   .tabs { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
   .tab { padding: 0.5rem 1rem; border: none; background: transparent; font-size: 0.875rem; font-weight: 600; cursor: pointer; border-bottom: 2px solid transparent; color: var(--gray-500); }
   .tab.active { color: var(--primary); border-bottom-color: var(--primary); }
 
-  /* Invoice */
   .invoice { background: #fff; padding: 2rem; }
   .invoice-header { display: flex; justify-content: space-between; margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 3px solid var(--primary); }
   .invoice-title { font-size: 1.75rem; font-weight: 700; color: var(--primary); }
@@ -71,6 +72,9 @@
   .invoice-totals .row { display: flex; justify-content: space-between; padding: 0.35rem 0; font-size: 0.875rem; }
   .invoice-totals .total { font-weight: 700; font-size: 1rem; border-top: 2px solid var(--gray-900); padding-top: 0.5rem; margin-top: 0.25rem; }
   .invoice-footer { margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--gray-200); font-size: 0.75rem; color: var(--gray-500); text-align: center; }
+
+  .employee-summary { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--gray-200); }
+  .employee-chip { font-size: 0.75rem; padding: 0.25rem 0.75rem; border-radius: 9999px; background: #eff6ff; border: 1px solid #bfdbfe; }
 
   .no-print { }
   @media print {
@@ -93,6 +97,7 @@
   <div class="no-print">
     <h1>Shared Services Timesheet & Invoice</h1>
     <p class="subtitle">Christ Greenfield Lutheran Church → John 1334 Ministries</p>
+    <div id="syncStatus" class="sync-status sync-loading">⏳ Connecting to Google Sheets...</div>
 
     <div class="tabs">
       <button class="tab active" onclick="switchTab('timesheet')">Timesheet</button>
@@ -118,6 +123,7 @@
           <label>Invoice #</label>
           <input type="text" id="invoiceNum" placeholder="INV-2026-001">
         </div>
+        <button class="btn btn-outline btn-sm" onclick="refreshData()" style="height:38px;align-self:end;" id="refreshBtn">🔄 Refresh</button>
       </div>
     </div>
 
@@ -126,14 +132,15 @@
       <h2>Monthly Budget Tracker</h2>
       <div style="display:flex;justify-content:space-between;align-items:baseline;">
         <span id="budgetUsed" style="font-size:1.5rem;font-weight:700;">$0.00</span>
-        <span style="font-size:0.85rem;color:var(--gray-500);">of $5,000.00 monthly cap</span>
+        <span id="capLabel" style="font-size:0.85rem;color:var(--gray-500);">of $5,000.00 monthly cap</span>
       </div>
       <div class="budget-bar"><div class="budget-fill" id="budgetFill" style="width:0%;background:var(--success);"></div></div>
       <div class="budget-stats">
-        <span id="budgetPercent">0% used</span>
+        <span id="budgetPercent">0.0% used</span>
         <span id="budgetRemaining">$5,000.00 remaining</span>
       </div>
       <div class="category-breakdown" id="categoryBreakdown"></div>
+      <div class="employee-summary" id="employeeSummary"></div>
     </div>
 
     <!-- Add Entry -->
@@ -143,6 +150,14 @@
         <div class="form-group">
           <label>Date</label>
           <input type="date" id="entryDate">
+        </div>
+        <div class="form-group">
+          <label>Employee</label>
+          <select id="entryEmployee">
+            <option value="Stephanie Burke">Stephanie Burke</option>
+            <option value="Joy Heiden">Joy Heiden</option>
+            <option value="Joy Gerhauser">Joy Gerhauser</option>
+          </select>
         </div>
         <div class="form-group">
           <label>Category</label>
@@ -160,17 +175,20 @@
           <label>Description (optional)</label>
           <input type="text" id="entryDesc" placeholder="Brief description of work">
         </div>
-        <button class="btn btn-primary" onclick="addEntry()" style="height:38px;align-self:end;">+ Add</button>
+        <button class="btn btn-primary" onclick="addEntry()" style="height:38px;align-self:end;" id="addBtn">+ Add</button>
       </div>
     </div>
 
     <!-- Entries Table -->
     <div class="card">
-      <h2>Time Entries</h2>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+        <h2 style="margin-bottom:0;">Time Entries</h2>
+        <span id="entryCount" style="font-size:0.75rem;color:var(--gray-500);"></span>
+      </div>
       <div id="entriesEmpty" style="text-align:center;color:var(--gray-500);padding:2rem;">No entries yet. Add your first time entry above.</div>
       <table id="entriesTable" style="display:none;">
         <thead>
-          <tr><th>Date</th><th>Category</th><th>Hours</th><th>Cost</th><th>Description</th><th></th></tr>
+          <tr><th>Date</th><th>Employee</th><th>Category</th><th>Hours</th><th>Cost</th><th>Description</th><th></th></tr>
         </thead>
         <tbody id="entriesBody"></tbody>
       </table>
@@ -188,34 +206,64 @@
 </div>
 
 <script>
-const HOURLY_RATE = 22.50;
-const FICA_RATE = 0.0765;
-const ALL_IN_RATE = 24.22;
-const MONTHLY_CAP = 5000.00;
-const STORAGE_KEY = 'cg-timesheet-entries';
+// ============================================
+// CONFIG — Replace API_URL after deploying Apps Script
+// ============================================
+const API_URL = 'https://script.google.com/macros/s/AKfycbx2fEDn1R-tEHKfuG7cjEvoa2yGUPBYhAIEtLqjlsuIAO3l-KBEQmHi1PCP7fFwX3tThA/exec';
+
+let HOURLY_RATE = 25.00;
+let MONTHLY_CAP = 5000.00;
 const SETTINGS_KEY = 'cg-timesheet-settings';
 
 let entries = [];
+let isOnline = false;
 
-function loadData() {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY);
+// ============================================
+// API LAYER
+// ============================================
+
+async function apiGet(action) {
+  const resp = await fetch(API_URL + '?action=' + action);
+  return resp.json();
+}
+
+async function apiPost(payload) {
+  const resp = await fetch(API_URL, {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  });
+  return resp.json();
+}
+
+// ============================================
+// INIT
+// ============================================
+
+async function init() {
+  loadSettings();
+  document.getElementById('entryDate').value = new Date().toISOString().split('T')[0];
+
+  if (API_URL) {
+    await refreshData();
+  } else {
+    // Offline / no API — use localStorage
+    setSyncStatus('offline', '📦 Offline mode — data saved in your browser only');
+    const saved = localStorage.getItem('cg-timesheet-entries');
     entries = saved ? JSON.parse(saved) : [];
-    const settings = localStorage.getItem(SETTINGS_KEY);
-    if (settings) {
-      const s = JSON.parse(settings);
-      document.getElementById('periodStart').value = s.periodStart || '';
-      document.getElementById('periodEnd').value = s.periodEnd || '';
-      document.getElementById('invoiceNum').value = s.invoiceNum || '';
-    } else {
-      setDefaultPeriod();
-    }
-  } catch(e) {
-    entries = [];
+    render();
+  }
+}
+
+function loadSettings() {
+  const settings = localStorage.getItem(SETTINGS_KEY);
+  if (settings) {
+    const s = JSON.parse(settings);
+    document.getElementById('periodStart').value = s.periodStart || '';
+    document.getElementById('periodEnd').value = s.periodEnd || '';
+    document.getElementById('invoiceNum').value = s.invoiceNum || '';
+  } else {
     setDefaultPeriod();
   }
-  // Set default entry date to today
-  document.getElementById('entryDate').value = new Date().toISOString().split('T')[0];
 }
 
 function setDefaultPeriod() {
@@ -233,8 +281,7 @@ function setDefaultPeriod() {
   document.getElementById('invoiceNum').value = `INV-${y}-${String(m+1).padStart(2,'0')}${now.getDate() <= 15 ? 'A' : 'B'}`;
 }
 
-function saveData() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
+function saveSettings() {
   localStorage.setItem(SETTINGS_KEY, JSON.stringify({
     periodStart: document.getElementById('periodStart').value,
     periodEnd: document.getElementById('periodEnd').value,
@@ -242,15 +289,55 @@ function saveData() {
   }));
 }
 
-function getFilteredEntries() {
-  const start = document.getElementById('periodStart').value;
-  const end = document.getElementById('periodEnd').value;
-  if (!start || !end) return entries;
-  return entries.filter(e => e.date >= start && e.date <= end);
+// ============================================
+// SYNC STATUS
+// ============================================
+
+function setSyncStatus(type, text) {
+  const el = document.getElementById('syncStatus');
+  el.className = 'sync-status sync-' + type;
+  el.textContent = text;
 }
 
-function addEntry() {
+// ============================================
+// DATA OPERATIONS
+// ============================================
+
+async function refreshData() {
+  setSyncStatus('loading', '⏳ Syncing with Google Sheets...');
+  document.getElementById('refreshBtn').disabled = true;
+
+  try {
+    const result = await apiGet('getEntries');
+
+    if (result.error) throw new Error(result.error);
+
+    entries = result.entries || [];
+    isOnline = true;
+
+    if (result.config) {
+      HOURLY_RATE = result.config.rate || 25;
+      MONTHLY_CAP = result.config.cap || 5000;
+      document.getElementById('capLabel').textContent = `of $${MONTHLY_CAP.toFixed(2)} monthly cap`;
+    }
+
+    setSyncStatus('online', `✅ Synced with Google Sheets — ${entries.length} entries loaded`);
+    render();
+  } catch (err) {
+    console.error('Sync error:', err);
+    isOnline = false;
+    setSyncStatus('error', '❌ Could not connect — using local data');
+    const saved = localStorage.getItem('cg-timesheet-entries');
+    entries = saved ? JSON.parse(saved) : [];
+    render();
+  }
+
+  document.getElementById('refreshBtn').disabled = false;
+}
+
+async function addEntry() {
   const date = document.getElementById('entryDate').value;
+  const employee = document.getElementById('entryEmployee').value;
   const category = document.getElementById('entryCategory').value;
   const hours = parseFloat(document.getElementById('entryHours').value);
   const desc = document.getElementById('entryDesc').value.trim();
@@ -260,70 +347,145 @@ function addEntry() {
     return;
   }
 
-  entries.push({ id: Date.now().toString(), date, category, hours, description: desc });
-  entries.sort((a, b) => a.date.localeCompare(b.date));
-  saveData();
-  render();
+  const addBtn = document.getElementById('addBtn');
+  addBtn.disabled = true;
+  addBtn.textContent = '...';
 
-  // Reset form
+  try {
+    if (isOnline) {
+      const result = await apiPost({
+        action: 'addEntry',
+        date, employee, hours, category, description: desc
+      });
+
+      if (result.error) throw new Error(result.error);
+
+      // Refresh to get the latest data
+      await refreshData();
+    } else {
+      // Offline fallback
+      entries.push({ id: Date.now().toString(), date, employee, category, hours, description: desc });
+      entries.sort((a, b) => a.date.localeCompare(b.date));
+      localStorage.setItem('cg-timesheet-entries', JSON.stringify(entries));
+      render();
+    }
+  } catch (err) {
+    console.error('Add error:', err);
+    alert('Error adding entry: ' + err.message);
+  }
+
+  addBtn.disabled = false;
+  addBtn.textContent = '+ Add';
   document.getElementById('entryHours').value = '';
   document.getElementById('entryDesc').value = '';
 }
 
-function deleteEntry(id) {
-  entries = entries.filter(e => e.id !== id);
-  saveData();
-  render();
+async function deleteEntry(rowOrId) {
+  if (!confirm('Delete this entry?')) return;
+
+  try {
+    if (isOnline) {
+      const result = await apiPost({ action: 'deleteEntry', row: rowOrId });
+      if (result.error) throw new Error(result.error);
+      await refreshData();
+    } else {
+      entries = entries.filter(e => e.id !== rowOrId);
+      localStorage.setItem('cg-timesheet-entries', JSON.stringify(entries));
+      render();
+    }
+  } catch (err) {
+    console.error('Delete error:', err);
+    alert('Error deleting entry: ' + err.message);
+  }
+}
+
+// ============================================
+// RENDERING
+// ============================================
+
+function getFilteredEntries() {
+  const start = document.getElementById('periodStart').value;
+  const end = document.getElementById('periodEnd').value;
+  if (!start || !end) return entries;
+  return entries.filter(e => e.date >= start && e.date <= end);
+}
+
+function getMonthEntries() {
+  // All entries in the current period's month (for budget tracking)
+  const periodStart = document.getElementById('periodStart').value;
+  if (!periodStart) return entries;
+  const month = periodStart.substring(0, 7); // YYYY-MM
+  return entries.filter(e => e.date && e.date.substring(0, 7) === month);
 }
 
 function render() {
   const filtered = getFilteredEntries();
-  const totalHours = filtered.reduce((s, e) => s + e.hours, 0);
-  const totalCost = totalHours * ALL_IN_RATE;
-  const pct = Math.min((totalCost / MONTHLY_CAP) * 100, 100);
-  const remaining = Math.max(MONTHLY_CAP - totalCost, 0);
+  const monthEntries = getMonthEntries();
 
-  // Budget tracker
-  document.getElementById('budgetUsed').textContent = '$' + totalCost.toFixed(2);
+  // Budget uses FULL month data
+  const monthHours = monthEntries.reduce((s, e) => s + e.hours, 0);
+  const monthCost = monthHours * HOURLY_RATE;
+  const pct = Math.min((monthCost / MONTHLY_CAP) * 100, 100);
+  const remaining = Math.max(MONTHLY_CAP - monthCost, 0);
+
+  document.getElementById('budgetUsed').textContent = '$' + monthCost.toFixed(2);
   document.getElementById('budgetPercent').textContent = pct.toFixed(1) + '% used';
   document.getElementById('budgetRemaining').textContent = '$' + remaining.toFixed(2) + ' remaining';
   const fill = document.getElementById('budgetFill');
   fill.style.width = pct + '%';
   fill.style.background = pct >= 90 ? 'var(--danger)' : pct >= 70 ? 'var(--warning)' : 'var(--success)';
 
-  // Category breakdown
+  // Category breakdown (filtered period)
   const cats = {};
   filtered.forEach(e => { cats[e.category] = (cats[e.category] || 0) + e.hours; });
   const colors = { 'Accounting': '#3b82f6', 'Human Resources': '#8b5cf6', 'Administrative': '#f59e0b' };
   document.getElementById('categoryBreakdown').innerHTML = Object.entries(cats).map(([cat, hrs]) =>
-    `<span class="category-chip" style="border-left:3px solid ${colors[cat] || '#999'}">${cat}: ${hrs.toFixed(2)}h ($${(hrs * ALL_IN_RATE).toFixed(2)})</span>`
+    `<span class="category-chip" style="border-left:3px solid ${colors[cat] || '#999'}">${cat}: ${hrs.toFixed(2)}h ($${(hrs * HOURLY_RATE).toFixed(2)})</span>`
+  ).join('');
+
+  // Employee breakdown
+  const emps = {};
+  filtered.forEach(e => { const name = e.employee || 'Unknown'; emps[name] = (emps[name] || 0) + e.hours; });
+  document.getElementById('employeeSummary').innerHTML = Object.entries(emps).map(([name, hrs]) =>
+    `<span class="employee-chip">👤 ${name}: ${hrs.toFixed(2)}h ($${(hrs * HOURLY_RATE).toFixed(2)})</span>`
   ).join('');
 
   // Table
   const tbody = document.getElementById('entriesBody');
   const table = document.getElementById('entriesTable');
   const empty = document.getElementById('entriesEmpty');
+  document.getElementById('entryCount').textContent = filtered.length + ' entries in period';
+
   if (filtered.length === 0) {
     table.style.display = 'none';
     empty.style.display = 'block';
   } else {
     table.style.display = 'table';
     empty.style.display = 'none';
-    tbody.innerHTML = filtered.map(e => `<tr>
-      <td>${formatDate(e.date)}</td>
-      <td>${e.category}</td>
-      <td>${e.hours.toFixed(2)}</td>
-      <td>$${(e.hours * ALL_IN_RATE).toFixed(2)}</td>
-      <td style="color:var(--gray-500);font-size:0.8rem;">${e.description || '—'}</td>
-      <td><button class="btn btn-danger" onclick="deleteEntry('${e.id}')">✕</button></td>
-    </tr>`).join('');
+    tbody.innerHTML = filtered.map(e => {
+      const deleteId = isOnline ? e.row : e.id;
+      return `<tr>
+        <td>${formatDate(e.date)}</td>
+        <td>${e.employee || '—'}</td>
+        <td>${e.category}</td>
+        <td>${e.hours.toFixed(2)}</td>
+        <td>$${(e.hours * HOURLY_RATE).toFixed(2)}</td>
+        <td style="color:var(--gray-500);font-size:0.8rem;">${e.description || '—'}</td>
+        <td><button class="btn btn-danger" onclick="deleteEntry('${deleteId}')">✕</button></td>
+      </tr>`;
+    }).join('');
   }
 }
 
 function formatDate(dateStr) {
+  if (!dateStr) return '—';
   const [y,m,d] = dateStr.split('-');
   return `${parseInt(m)}/${parseInt(d)}/${y}`;
 }
+
+// ============================================
+// TABS & INVOICE
+// ============================================
 
 function switchTab(tab) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -342,16 +504,34 @@ function switchTab(tab) {
 function renderInvoice() {
   const filtered = getFilteredEntries();
   const totalHours = filtered.reduce((s, e) => s + e.hours, 0);
-  const grossWages = totalHours * HOURLY_RATE;
-  const ficaAmount = grossWages * FICA_RATE;
-  const totalDue = grossWages + ficaAmount;
+  const totalCost = totalHours * HOURLY_RATE;
   const periodStart = document.getElementById('periodStart').value;
   const periodEnd = document.getElementById('periodEnd').value;
   const invoiceNum = document.getElementById('invoiceNum').value;
 
-  // Group by category
-  const cats = {};
-  filtered.forEach(e => { cats[e.category] = (cats[e.category] || 0) + e.hours; });
+  const byEmployee = {};
+  filtered.forEach(e => {
+    const name = e.employee || 'Unknown';
+    if (!byEmployee[name]) byEmployee[name] = {};
+    byEmployee[name][e.category] = (byEmployee[name][e.category] || 0) + e.hours;
+  });
+
+  let lineItemsHtml = '';
+  Object.entries(byEmployee).forEach(([emp, cats]) => {
+    Object.entries(cats).forEach(([cat, hrs]) => {
+      lineItemsHtml += `<tr>
+        <td>${emp}</td>
+        <td>${cat}</td>
+        <td style="text-align:right;">${hrs.toFixed(2)}</td>
+        <td style="text-align:right;">$${HOURLY_RATE.toFixed(2)}/hr</td>
+        <td style="text-align:right;">$${(hrs * HOURLY_RATE).toFixed(2)}</td>
+      </tr>`;
+    });
+  });
+
+  if (!lineItemsHtml) {
+    lineItemsHtml = '<tr><td colspan="5" style="text-align:center;color:var(--gray-500);padding:1rem;">No entries for this period</td></tr>';
+  }
 
   document.getElementById('invoiceContent').innerHTML = `
     <div class="invoice-header">
@@ -380,39 +560,31 @@ function renderInvoice() {
     </div>
 
     <table class="invoice-table">
-      <thead><tr><th>Category</th><th style="text-align:right;">Hours</th><th style="text-align:right;">Rate</th><th style="text-align:right;">Amount</th></tr></thead>
-      <tbody>
-        ${Object.entries(cats).map(([cat, hrs]) => `<tr>
-          <td>${cat}</td>
-          <td style="text-align:right;">${hrs.toFixed(2)}</td>
-          <td style="text-align:right;">$${HOURLY_RATE.toFixed(2)}/hr</td>
-          <td style="text-align:right;">$${(hrs * HOURLY_RATE).toFixed(2)}</td>
-        </tr>`).join('')}
-        ${Object.keys(cats).length === 0 ? '<tr><td colspan="4" style="text-align:center;color:var(--gray-500);padding:1rem;">No entries for this period</td></tr>' : ''}
-      </tbody>
+      <thead><tr><th>Employee</th><th>Category</th><th style="text-align:right;">Hours</th><th style="text-align:right;">Rate</th><th style="text-align:right;">Amount</th></tr></thead>
+      <tbody>${lineItemsHtml}</tbody>
     </table>
 
     <div class="invoice-totals">
-      <div class="row"><span>Base Wages (${totalHours.toFixed(2)} hrs × $${HOURLY_RATE.toFixed(2)})</span><span>$${grossWages.toFixed(2)}</span></div>
-      <div class="row"><span>Employer FICA (7.65%)</span><span>$${ficaAmount.toFixed(2)}</span></div>
-      <div class="row total"><span>Total Due</span><span>$${totalDue.toFixed(2)}</span></div>
+      <div class="row"><span>Total (${totalHours.toFixed(2)} hrs × $${HOURLY_RATE.toFixed(2)})</span><span>$${totalCost.toFixed(2)}</span></div>
+      <div class="row total"><span>Total Due</span><span>$${totalCost.toFixed(2)}</span></div>
     </div>
 
     <div class="invoice-footer">
       Per Memorandum of Understanding — Shared Accounting, HR, and Administrative Support<br>
-      All-in hourly rate: $${ALL_IN_RATE}/hr | Monthly cap: $${MONTHLY_CAP.toFixed(2)} | CG is exempt from FUTA/SUTA; only FICA applies.
+      Hourly rate: $${HOURLY_RATE.toFixed(2)}/hr | Monthly cap: $${MONTHLY_CAP.toFixed(2)}
     </div>
   `;
 }
 
-// Listen for settings changes to re-render
+// ============================================
+// EVENT LISTENERS & BOOT
+// ============================================
+
 ['periodStart', 'periodEnd', 'invoiceNum'].forEach(id => {
-  document.getElementById(id).addEventListener('change', () => { saveData(); render(); });
+  document.getElementById(id).addEventListener('change', () => { saveSettings(); render(); });
 });
 
-// Init
-loadData();
-render();
+init();
 </script>
 </body>
 </html>
